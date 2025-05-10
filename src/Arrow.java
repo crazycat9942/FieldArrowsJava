@@ -8,7 +8,7 @@ public class Arrow
     double coordY;
     double screenX;
     double screenY;
-    double length = 3;
+    double length = 4;
     Color color;
     double magnitude;
     double maxCX;
@@ -31,8 +31,8 @@ public class Arrow
         coordY = initY;
         maxSX = panel.window_screenX;
         maxSY = panel.window_screenY;
-        maxCX = panel.window_maxCoordX;
-        maxCY = panel.window_maxCoordY;
+        maxCX = panel.maxCoordX;
+        maxCY = panel.maxCoordY;
         screenX = coordsToScreenX(coordX);
         screenY = coordsToScreenY(coordY);
         Point2D tempPoint = panel.getVector(coordX, coordY);
@@ -50,8 +50,8 @@ public class Arrow
     }
     public void update(Graphics g, Panel panel)
     {
-        maxCX = panel.window_maxCoordX;
-        maxCY = panel.window_maxCoordY;
+        maxCX = panel.maxCoordX;
+        maxCY = panel.maxCoordY;
         coordX = screenToCoordsX(screenX);
         coordY = screenToCoordsY(screenY);
         Point2D tempPoint = panel.getVector(coordX, coordY);
@@ -87,8 +87,10 @@ public class Arrow
 
                 vector_to_rgb(np.pi*rotation/180, length), (leftSide,rightSide,top),0)*/
     }
-    public double screenToCoordsX(double screenX) {return 2*panel.window_maxCoordX*(screenX - maxSX/2)/maxSX;}
-    public double screenToCoordsY(double screenY) {return -2*panel.window_maxCoordY*(screenY - maxSY/2)/maxSY;}
-    public double coordsToScreenX(double CX) {return 0.5*CX*maxSX/panel.window_maxCoordX + maxSX/2;}
-    public double coordsToScreenY(double CY) {return -0.5*CY*maxSY/panel.window_maxCoordY + maxSY/2;}
+    public double screenToCoordsX(double screenX) {return panel.centerX -0*(panel.minCoordX - panel.origMaxMin[2]) + (panel.maxCoordX - panel.minCoordX) *(screenX - maxSX/2)/maxSX;}
+    public double screenToCoordsY(double screenY) {return panel.centerY -0*(panel.minCoordY - panel.origMaxMin[3]) -(panel.maxCoordY - panel.minCoordY) *(screenY - maxSY/2)/maxSY;}
+    //public double coordsToScreenX(double CX) {return maxSX * (CX - panel.minCoordX + panel.origMaxMin[2])/(panel.maxCoordX - panel.minCoordX) + maxSX/2;}
+    //public double coordsToScreenY(double CY) {return maxSY * (CX - panel.minCoordX + panel.origMaxMin[2])/(panel.maxCoordX - panel.minCoordX) + maxSX/2;}
+    public double coordsToScreenX(double CX) {return CX*maxSX/(panel.maxCoordX - panel.minCoordX) + maxSX/2;}
+    public double coordsToScreenY(double CY) {return -CY*maxSY/(panel.maxCoordY - panel.minCoordY) + maxSY/2;}
 }

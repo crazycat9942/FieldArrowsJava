@@ -74,6 +74,7 @@ class Panel extends JPanel {
     BufferedImage tempImage = null;
     boolean zoomChanged = true;
     boolean panChanged = true;
+    double mandelbrotDetail;
     Panel()
     {
         parser = new JEP();
@@ -332,8 +333,8 @@ class Panel extends JPanel {
         return max;
     }
     public void colorComplex(){
-        int iStep = 10;
-        int jStep = 10;
+        int iStep = (int)menu.complexDetail.getValue();
+        int jStep = (int)menu.complexDetail.getValue();
         int numIStep = (int)(window_screenX/iStep);
         int numJStep = (int)(window_screenY/jStep);
         //System.out.println(numIStep);
@@ -372,7 +373,7 @@ class Panel extends JPanel {
             for(int i = 0; i < numIStep; i++) {
                 for (int j = 0; j < numJStep; j++) {
                     Complex m = new Complex(screenToCoordsX(i * iStep), screenToCoordsY(j * jStep));
-                    parser.addVariable("z", m);
+                    parser.addComplexVariable("z", m.re(), m.im());
                     parser.parseExpression(menu.P.getText());
                     Complex R = parser.getComplexValue();
                     //System.out.println(R);
@@ -669,7 +670,7 @@ class Panel extends JPanel {
     {
         int area = (maxI-minI + 1) * (maxJ - minJ + 1);
         //System.out.println(minI + " " + minJ + " " + maxI + " " + maxJ + " " + area);
-        if(area < 32)
+        if(area < 16)
         {
             for(int tempI = minI; tempI <= maxI; tempI++)
             {
@@ -801,11 +802,12 @@ class Panel extends JPanel {
         int i = 0;
         Complex c = z;
         double xsqr = 0; double ysqr = 0;
-        int maxIter = 1000;
+        int maxIter = 100;
         while(i < maxIter)
         {
             orbit.add(z);
-            z = z.mul(z).add(c);
+            z = z.mul(z);
+            z = new Complex(z.re() + c.re(), z.im() + c.im());
             xsqr = z.re() * z.re();
             ysqr = z.im() * z.im();
             i++;
@@ -818,11 +820,12 @@ class Panel extends JPanel {
         int i = 0;
         //double cx = z.re(); double cy = z.im();
         //double zx = 0; double zy = 0;
+        long start = System.nanoTime();
         double xsqr = 0; double ysqr = 0;
         double x = z.re();
         double y = z.im();
-        int maxIter = 1000;
-        while(i < maxIter && xsqr + ysqr < 4)
+        int maxIter = (int)mandelbrotDetail;
+        while(i < maxIter && xsqr + ysqr < 4)// && System.nanoTime() - start < 100000)
         {
             /*zy *= zx;
             zy += zy + cy;
@@ -870,7 +873,8 @@ class Panel extends JPanel {
         for(int i = 0; i < 1; i++)
         {
             //z = (z.power(2).add(c)).power(2).add(c);
-            z = z.power(2).add(c);
+            z = z.power(2);
+            z = new Complex(z.re() + c.re(), z.im() + c.im());
             //if(z.abs())
             //if(z.)
         }
@@ -891,6 +895,7 @@ class Panel extends JPanel {
         //maxCoordX = tempPoint[0];
         //maxCoordY = maxCoordX *window_screenY/window_screenX;
         //maxCoordY = tempPoint[1];
+        mandelbrotDetail = menu.mandelbrotDetail.getValue();
         g = gInit;
         if(!menu.P.getText().contains("z"))
         {

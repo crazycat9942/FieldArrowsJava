@@ -49,6 +49,8 @@ class Menu extends JFrame
     JButton subCenterX;
     JButton addCenterY;
     JButton subCenterY;
+    JSlider complexDetail;
+    JSlider mandelbrotDetail;
     double lastTime;
     public Menu(Panel panelInit)
     {
@@ -149,6 +151,13 @@ class Menu extends JFrame
                 panel.maxCoordY -= 0.1;
             }
         });
+        complexDetail = new JSlider(1, 50, 20);
+        complexDetail.setInverted(true);
+        this.add(new JTextField("Complex equation detail:"));
+        this.add(complexDetail);
+        mandelbrotDetail = new JSlider(10, 10000, 100);
+        this.add(new JTextField("Mandelbrot set detail:"));
+        this.add(mandelbrotDetail);
         /*addZoom = new JButton("+");
         subZoom = new JButton("-");
         addZoom.addActionListener(new ActionListener() {

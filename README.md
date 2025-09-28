@@ -1,4 +1,6 @@
 **Simulates user defined equations including vector fields and complex-valued functions**  
+
+  *Download the program by going to the latest release and running the .jar file*  
   
 **Creating a vector field:**  
   - Input the functions of the vector field such that the x component is in the "P" box and the y component is in the "Q" box. For example, P = y and Q = 0 would make the x component of the vectors proportional to the y value.  

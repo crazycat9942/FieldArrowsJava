@@ -19,3 +19,5 @@
   - The mandelbrot set is defined as follows: for every a + bi in the complex plane, there is a function f<sub>c</sub>(z) = z<sup>2</sup> + c where c = a + bi. Then f<sub>c</sub>(f<sub>c</sub>(c)) = (z<sup>2</sup> + c)<sup>2</sup> + c and so on. If, after infinite iterations, this does not diverge to infinity then a + bi is part of the mandelbrot set.  
   - The points inside the mandelbrot set are colored black and the ones not in the set are colored based on how many iterations of f<sub>c</sub>(f<sub>c</sub>(...)) it takes for the magnitude of the complex number to be greater than 2, which is the cutoff for convergence.
 
+
+    <img width="2611" height="1936" alt="image of the mandelbrot set viewed with the program" src="https://github.com/user-attachments/assets/047ccd73-e107-4a92-abc2-fadb55a5b877" />

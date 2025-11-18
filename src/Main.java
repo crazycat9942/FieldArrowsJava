@@ -75,6 +75,7 @@ class Panel extends JPanel {
     boolean zoomChanged = true;
     boolean panChanged = true;
     double mandelbrotDetail;
+    boolean userPressed = false;
     Panel()
     {
         parser = new JEP();
@@ -136,16 +137,25 @@ class Panel extends JPanel {
         });
         this.addMouseListener(new MouseAdapter()
         {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                userPressed = false;
+            }
+
             public void mousePressed(MouseEvent m)
             {
-                lastPoint = m.getPoint();
+                if(!menu.contourFreeformActive && !menu.contourFreeformClosedActive) {
+                    lastPoint = m.getPoint();
+                }
+                userPressed = true;
             }
         });
         this.addMouseMotionListener(new MouseAdapter()
         {//panning
             public void mouseDragged(MouseEvent m)//when mouse dragged
             {
-                if (lastPoint != null)//if lastpoint is defined
+                if (lastPoint != null && !menu.contourFreeformActive && !menu.contourFreeformClosedActive)//if lastpoint is defined
                 {
                     panChanged = true;
                     lastCenter = new Point2D.Double(centerX, centerY);
@@ -367,24 +377,40 @@ class Panel extends JPanel {
         }
         else
         {
+            if (!zoomChanged && !panChanged && tempImage != null) {
+                g.drawImage(tempImage, 0, 0, null);
+            }
+            else
+            {
             parser.addVariable("t", time);
-            double[][][] colorData = new double[numIStep][numJStep][5];
             colors = new int[1600][900];
+            Complex m;
+            double argument;
+            double modulus;
+            Complex R;
+            Color tempColor;
             for(int i = 0; i < numIStep; i++) {
                 for (int j = 0; j < numJStep; j++) {
-                    Complex m = new Complex(screenToCoordsX(i * iStep), screenToCoordsY(j * jStep));
+                    m = new Complex(screenToCoordsX(i * iStep), screenToCoordsY(j * jStep));
                     parser.addComplexVariable("z", m.re(), m.im());
                     parser.parseExpression(menu.P.getText());
-                    Complex R = parser.getComplexValue();
+                    R = parser.getComplexValue();
                     //System.out.println(R);
-                    double argument = Math.toDegrees(Math.atan2(R.im(), R.re()));
+                    argument = Math.toDegrees(Math.atan2(R.im(), R.re()));
                     if (argument < 0f) {
                         argument = argument + 360f;
                     }
-                    double modulus = Math.sqrt(Math.pow(R.re(), 2) + Math.pow(R.im(), 2));
+                    modulus = Math.sqrt(Math.pow(R.re(), 2) + Math.pow(R.im(), 2));
                     modulus = (float) Math.pow((1f - Math.exp(-0.02f * modulus)), 0.3);
-                    Color tempColor = hslToRGB((float) argument, (float) modulus, (float) modulus);
-                    colorData[i][j] = new double[]{tempColor.getRed(), tempColor.getGreen(), tempColor.getBlue(), m.re(), m.im()};
+                    tempColor = hslToRGB((float) argument, (float) modulus, (float) modulus);
+                    int rgbval = tempColor.getRGB();
+                    for(int k = i*iStep; k < (i+1)*iStep; k++)
+                    {
+                        for(int l = j*jStep; l < (j+1)*jStep; l++)
+                        {
+                            colors[k][l] = rgbval;
+                        }
+                    }
                     /*for(int k = i*iStep; k < (i + 1)*iStep; k++)
                     {
                         for(int l = j*jStep; l < (j + 1)*jStep; l++)
@@ -392,11 +418,13 @@ class Panel extends JPanel {
                             colors[(k * iStep) - 1][(l * jStep)] = tempColor.getRGB();
                         }
                     }*/
-                    g.setColor(tempColor);
-                    g.fillRect(i*iStep, j*jStep, (i + 1) * iStep, (j + 1) * jStep);
+                    //g.setColor(tempColor);
+                    //g.fillRect(i * iStep, j * jStep, (i + 1) * iStep, (j + 1) * jStep);
+                }
                 }
             }
-            //tempImage = createImage(colors);
+            tempImage = createImage(colors);
+            g.drawImage(tempImage, 0, 0, null);
             //g.drawImage(tempImage, 0, 0, null);
             /*for(int i = 0; i < numIStep; i++)
             {
@@ -860,11 +888,27 @@ class Panel extends JPanel {
                 double g = color1[1] + (n - Math.floor(n)) * (color2[1] - color1[1]);
                 double b = color1[2] + (n - Math.floor(n)) * (color2[2] - color1[2]);*/
         //double n = 0.99;
-        double h = (Math.log(i + 20) * 100) % 360;
+        double h = (Math.log(i + 15) * 100) % 360;
         //double c_ = 100;
         //double l = 100;
         //return hslToRGB((float)Math.pow(((double)i/maxIter)*360, 1.5) % 360f, 0.5f, ((float)(i/maxIter)));
-        return HCLToRGB(h, 100, 1.5);
+        return HCLToRGB(h, 100, 2);
+    }
+    public int mandelbrotDiverge(Complex z) {//gives number of iterations before the mandelbrot thing diverges (goes past 2 in magnitude)
+        int i = 0;
+        double xsqr = 0;
+        double ysqr = 0;
+        double x = z.re();
+        double y = z.im();
+        int maxIter = (int) mandelbrotDetail;
+        while (i < maxIter && xsqr + ysqr < 4)
+        {
+            xsqr = z.re() * z.re();
+            ysqr = z.im() * z.im();
+            z = new Complex(xsqr - ysqr + x, 2 * z.re() * z.im() + y);
+            i++;
+        }
+        return i;
     }
     public Complex mandelbrot(Complex z)
     {
@@ -915,8 +959,8 @@ class Panel extends JPanel {
         else
         {
             userMouse = MouseInfo.getPointerInfo().getLocation();
-            menu.update(g);
             colorComplex();
+            menu.update(g);
         }
         axes.update(g);
         /*if(!Double.isNaN(forceAtMouse.getX()))
@@ -944,8 +988,8 @@ class Panel extends JPanel {
             }
         });
         timer.setRepeats(true);
-        // Aprox. 60 FPS
-        timer.setDelay(17);
+        // Aprox. 60 FPS at 17
+        timer.setDelay(1);
         timer.start();
     }
     @Override

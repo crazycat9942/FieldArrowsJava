@@ -24,6 +24,8 @@ public class Arrow
     double DQDX;
     double DQDY;
     double DQDT;
+    int endX;
+    int endY;
     public Arrow(double initX, double initY, Panel panelInit)
     {
         panel = panelInit;
@@ -59,8 +61,8 @@ public class Arrow
         curl = panel.getCurl(coordX, coordY);
         angle = tempPoint.getY();
         panel.vector_to_rgb(this);
-        int endX = (int)(screenX + 2*length*Math.cos(angle));
-        int endY = (int)(screenY + 2*length*Math.sin(angle));
+        endX = (int)(screenX + 2*length*Math.cos(angle));
+        endY = (int)(screenY + 2*length*Math.sin(angle));
         /*int leftX = endX - (int)(length*Math.sin(angle));
         int leftY = endY + (int)(length*Math.cos(angle));
         int rightX = endX + (int)(length*Math.sin(angle));

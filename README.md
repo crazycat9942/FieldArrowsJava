@@ -14,7 +14,7 @@
   - Complex equations can be made by putting any function of z (e.g. z<sup>2</sup>) into the "P" box.  
   - Complex equations take in 2 inputs (the x and y coordinate of a pixel on screen converted to real (x) and imaginary (y) values) and spit out 2 outputs.  
   - The outputs of the complex equation have an argument (direction) and modulus (magnitude). Similar to the vector fields, the argument controls the hue and the modulus controls the brightness.
-  - Create contour integrals (integrals of complex functions) with the buttons in the menu for either a freeform, closed freeform, or circular contour.
+  - Create contour integrals (integrals of complex functions) with the buttons in the menu for either a freeform, closed freeform, or circular contour. The value of the contour integral is shown in the upper left corner of the screen.
   
 **Mandelbrot set info:**  
   - This is an extra thing I put in because it looks pretty. To view the set type "zm" into the "P" box. To increase the number of max iterations slide the slider for the mandelbrot set in the menu.  

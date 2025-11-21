@@ -74,6 +74,7 @@ class Panel extends JPanel {
     BufferedImage tempImage = null;
     boolean zoomChanged = true;
     boolean panChanged = true;
+    boolean keyChanged = false;
     double mandelbrotDetail;
     boolean userPressed = false;
     Panel()
@@ -172,6 +173,13 @@ class Panel extends JPanel {
                 lastPoint = m.getPoint();
             }
         });
+        menu.P.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
+                keyChanged = true;
+            }
+        });
     }
     public void updateArrows()
     {
@@ -187,6 +195,7 @@ class Panel extends JPanel {
         Complex R;
         Complex S;
         //here's where you put the function the vector field is representing
+        try {
             Expression pExpression = new ExpressionBuilder(menu.P.getText())
                     .variables("x", "y", "t")
                     .build()
@@ -201,6 +210,11 @@ class Panel extends JPanel {
                     .setVariable("t", time);
             P = pExpression.evaluate();
             Q = qExpression.evaluate();
+        }
+        catch (IllegalArgumentException e)
+        {
+            return new Point2D.Double(0,0);
+        }
         //double P = coordY/(Math.pow(coordX, 2) + Math.pow(coordY, 2)) + Math.cos(time);
         //double Q = -coordX/(Math.pow(coordX, 2) + Math.pow(coordY, 2)) + Math.sin(time);
         double magnitude = Math.sqrt(Math.pow(P, 2) + Math.pow(Q, 2));
@@ -258,7 +272,7 @@ class Panel extends JPanel {
     public Color hslToRGB(float h, float s, float l)
     {//h is [0,360) (degrees), s is [0, 1] l is [0, 1]
         //System.out.println(h + " " + s + " " + l);
-        //l = 0.8f*l + 0.2f;
+        l = 0.92f*l + 0.08f;
         if(s >= 1){s = 0.9999f;}
         if(l >= 1){l = 0.9999f;}
         s = 0.7f*s + 0.29999f;
@@ -377,7 +391,7 @@ class Panel extends JPanel {
         }
         else
         {
-            if (!zoomChanged && !panChanged && tempImage != null) {
+            if (!zoomChanged && !panChanged && !keyChanged && tempImage != null) {
                 g.drawImage(tempImage, 0, 0, null);
             }
             else
@@ -389,6 +403,8 @@ class Panel extends JPanel {
             double modulus;
             Complex R;
             Color tempColor;
+            parser.removeVariable("x");
+            parser.removeVariable("y");
             for(int i = 0; i < numIStep; i++) {
                 for (int j = 0; j < numJStep; j++) {
                     m = new Complex(screenToCoordsX(i * iStep), screenToCoordsY(j * jStep));
@@ -396,20 +412,24 @@ class Panel extends JPanel {
                     parser.parseExpression(menu.P.getText());
                     R = parser.getComplexValue();
                     //System.out.println(R);
-                    argument = Math.toDegrees(Math.atan2(R.im(), R.re()));
-                    if (argument < 0f) {
-                        argument = argument + 360f;
-                    }
-                    modulus = Math.sqrt(Math.pow(R.re(), 2) + Math.pow(R.im(), 2));
-                    modulus = (float) Math.pow((1f - Math.exp(-0.02f * modulus)), 0.3);
-                    tempColor = hslToRGB((float) argument, (float) modulus, (float) modulus);
-                    int rgbval = tempColor.getRGB();
-                    for(int k = i*iStep; k < (i+1)*iStep; k++)
-                    {
-                        for(int l = j*jStep; l < (j+1)*jStep; l++)
-                        {
-                            colors[k][l] = rgbval;
+                    if(!parser.hasError()) {
+                        menu.P.setForeground(Color.white);
+                        argument = Math.toDegrees(Math.atan2(R.im(), R.re()));
+                        if (argument < 0f) {
+                            argument = argument + 360f;
                         }
+                        modulus = Math.sqrt(Math.pow(R.re(), 2) + Math.pow(R.im(), 2));
+                        modulus = (float) Math.pow((1f - Math.exp(-0.02f * modulus)), 0.3);
+                        tempColor = hslToRGB((float) argument, (float) modulus, (float) modulus);
+                        int rgbval = tempColor.getRGB();
+                        for (int k = i * iStep; k < (i + 1) * iStep; k++) {
+                            for (int l = j * jStep; l < (j + 1) * jStep; l++) {
+                                colors[k][l] = rgbval;
+                            }
+                        }
+                    }
+                    else {
+                        menu.P.setForeground(Color.red);
                     }
                     /*for(int k = i*iStep; k < (i + 1)*iStep; k++)
                     {
@@ -466,7 +486,7 @@ class Panel extends JPanel {
                 };
                 range = Range.create(16);
             }
-            if (!zoomChanged && !panChanged && tempImage != null) {
+            if (!zoomChanged && !panChanged && !keyChanged && tempImage != null) {
                 g.drawImage(tempImage, 0, 0, null);
             }
             /*else if(panChanged && tempImage != null)
@@ -979,6 +999,7 @@ class Panel extends JPanel {
         time += 0.049;
         zoomChanged = false;
         panChanged = false;
+        keyChanged = false;
     }
     public void refreshScreen() {
         timer = new Timer(0, new ActionListener() {

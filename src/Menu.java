@@ -1,8 +1,10 @@
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import net.miginfocom.swing.MigLayout;
+import org.jfree.chart.renderer.category.BarPainter;
 import org.nfunk.jep.type.Complex;
 
 import javax.swing.*;
+import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
@@ -79,8 +81,16 @@ class Menu extends JFrame
         QText = new JTextField("Q: ");
         P = new JTextField("cos(0.3x + 0.6y)");
         P.setMinimumSize(new Dimension(300, 40));
+        P.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("shiant");
+                panel.colorComplex();
+            }
+        });
         Q = new JTextField("sin(0.3y - 0.6x)");
         Q.setMinimumSize(new Dimension(300, 40));
+        Q.addActionListener(P.getActionListeners()[0]);
         P.setFont(new Font(P.getFont().getFontName(), Font.PLAIN, 23));
         Q.setFont(new Font(Q.getFont().getFontName(), Font.PLAIN, 23));
         //System.out.println(colorWithCurl.isSelected());
@@ -345,6 +355,9 @@ class Menu extends JFrame
             scaleWithMag.setEnabled(true);
             complexDetail.setEnabled(false);
             mandelbrotDetail.setEnabled(false);
+            contourFreeform.setEnabled(false);
+            contourCircular.setEnabled(false);
+            contourFreeformClosed.setEnabled(false);
             curlArea.setText("Curl at cursor: " + df.format(panel.getCurl(panel.userMouse.x - 6, panel.userMouse.y - 31)));
             divArea.setText("Divergence at cursor: " + df.format(panel.getDiv(panel.userMouse.x - 6, panel.userMouse.y - 31)));
             magArea.setText("Magnitude at cursor: " + df.format(panel.getMag(panel.userMouse.x - 6, panel.userMouse.y - 31)));
@@ -355,13 +368,37 @@ class Menu extends JFrame
             panel.parser.addVariable("x", mouseCoordX);
             panel.parser.addVariable("y", mouseCoordY);
             panel.parser.addVariable("t", panel.time);
+            panel.parser.removeVariable("z");
+            float tempX = 0;
+            float tempY = 0;
+            boolean error = false;
             panel.parser.parseExpression(P.getText());
-            float tempX = (float)panel.parser.getValue();
+            if(panel.parser.hasError())
+            {
+                P.setForeground(Color.red);
+                outputAtPoint.setText("Invalid input!");
+                error = true;
+            }
+            else {
+                P.setForeground(Color.white);
+                tempX = (float) panel.parser.getValue();
+            }
             panel.parser.parseExpression(Q.getText());
-            float tempY = (float)panel.parser.getValue();
-            outputAtPoint.setText("Output at mouse: (" + tempX + ", " + tempY + ")");
+            if(panel.parser.hasError())
+            {
+                Q.setForeground(Color.red);
+                outputAtPoint.setText("Invalid input!");
+                error = true;
+            }
+            else {
+                Q.setForeground(Color.white);
+                tempY = (float) panel.parser.getValue();
+            }
+            if(!error) {
+                outputAtPoint.setText("Output at mouse: (" + tempX + ", " + tempY + ")");
+            }
         }
-        else if(!P.getText().contains("zm"))
+        else if(!P.getText().contains("zm"))//contains a function of z that isn't mandelbrot
         {
             Q.setEnabled(false);
             addTestPoint.setEnabled(false);
@@ -371,14 +408,25 @@ class Menu extends JFrame
             scaleWithMag.setEnabled(false);
             complexDetail.setEnabled(true);
             mandelbrotDetail.setEnabled(false);
+            contourFreeform.setEnabled(true);
+            contourCircular.setEnabled(true);
+            contourFreeformClosed.setEnabled(true);
             double mouseCoordX = panel.screenToCoordsX(panel.userMouse.x - 6);
             double mouseCoordY = panel.screenToCoordsY(panel.userMouse.y - 31);
             coordAtPoint.setText("Mouse coordinates: " + mouseCoordX + " + " + mouseCoordY + "i");
             panel.parser.addComplexVariable("z", mouseCoordX, mouseCoordY);
             panel.parser.addVariable("t", panel.time);
             panel.parser.parseExpression(P.getText());
-            Complex temp = panel.parser.getComplexValue();
-            outputAtPoint.setText("Output at mouse: " + (float)temp.re() + " + " + (float)temp.im() + "i");
+            if(panel.parser.hasError())
+            {
+                P.setForeground(Color.red);
+                outputAtPoint.setText("Invalid input!");
+            }
+            else {
+                Complex temp = panel.parser.getComplexValue();
+                P.setForeground(Color.white);
+                outputAtPoint.setText("Output at mouse: " + (float) temp.re() + " + " + (float) temp.im() + "i");
+            }
         }
         else
         {
@@ -389,6 +437,9 @@ class Menu extends JFrame
             scaleWithMag.setEnabled(false);
             complexDetail.setEnabled(false);
             mandelbrotDetail.setEnabled(true);
+            contourFreeform.setEnabled(false);
+            contourCircular.setEnabled(false);
+            contourFreeformClosed.setEnabled(false);
             double mouseCoordX = panel.screenToCoordsX(panel.userMouse.x - 6);
             double mouseCoordY = panel.screenToCoordsY(panel.userMouse.y - 31);
             coordAtPoint.setText("Mouse coordinates: " + (float)mouseCoordX + " + " + (float)mouseCoordY + "i");
@@ -396,6 +447,8 @@ class Menu extends JFrame
         }
         //Arrow tempArrow = new Arrow(panel.axes.screenToCoordsX(panel.userMouse.x), panel.axes.screenToCoordsY(panel.userMouse.y), panel);
         //jacobArea.setText("Jacobian:\n   x  y  t\nP   " + tempArrow.DPDX + "  " + tempArrow.DPDY + "  3\nQ   4  5  6");
+        Graphics2D g2d = (Graphics2D)g;
+        g2d.setStroke(new BasicStroke(1));//thickness/size of line of test point trajectory
         for(Point i: testPoints)
         {
             panel.g.drawOval(i.x, i.y, 2, 2);
@@ -407,7 +460,7 @@ class Menu extends JFrame
                 Arrow temp = new Arrow(panel.screenToCoordsX(tempX), panel.screenToCoordsY(tempY), panel);
                 tempX += 3*Math.cos(temp.angle);
                 tempY += 3*Math.sin(temp.angle);
-                panel.g.drawLine((int)tempX2, (int)tempY2, (int)tempX, (int)tempY);
+                g2d.drawLine((int)tempX2, (int)tempY2, (int)tempX, (int)tempY);
             }
             tempX = i.x;
             tempY = i.y;

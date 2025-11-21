@@ -1,5 +1,6 @@
-# ***Download the program by going to the latest release on the right hand side of the screen and running the .jar file***  
-
+# *Download the program by going to the latest release and running the .jar file OR by clicking the link below* 
+https://github.com/crazycat9942/FieldArrowsJava/releases/download/v1.0.4/FieldArrowsJava2.jar
+  
 **Simulates user defined equations including vector fields and complex-valued functions**  
   
 **Creating a vector field:**  

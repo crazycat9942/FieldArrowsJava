@@ -1,16 +1,14 @@
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import net.miginfocom.swing.MigLayout;
-import org.jfree.chart.renderer.category.BarPainter;
 import org.nfunk.jep.type.Complex;
 
 import javax.swing.*;
-import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-class Menu extends JFrame
+public class Menu extends JFrame
 {
     static Panel panel;
     ArrayList<JCheckBox> checkBoxes = new ArrayList<>();
@@ -53,6 +51,8 @@ class Menu extends JFrame
     boolean testPointActive = false;
     ArrayList<Point> testPoints = new ArrayList<>();
     Point windowPos = new Point(0,0);
+    JPanel pane;
+    JScrollPane sPane;
     public Menu(Panel panelInit)
     {
         panel = panelInit;
@@ -84,7 +84,6 @@ class Menu extends JFrame
         P.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("shiant");
                 panel.colorComplex();
             }
         });
@@ -95,44 +94,49 @@ class Menu extends JFrame
         Q.setFont(new Font(Q.getFont().getFontName(), Font.PLAIN, 23));
         //System.out.println(colorWithCurl.isSelected());
         ml.setLayoutConstraints("width 350px!, wrap");
-        this.add(colorWithMag);
-        this.add(colorWithCurl);
+
+        pane = new JPanel();
+        pane.setLayout(ml);
+        pane.setPreferredSize(new Dimension(350,300));
+        //pane.setLayout(new FlowLayout());
+        pane.add(colorWithMag);
+        pane.add(colorWithCurl);//, BorderLayout.AFTER_LAST_LINE);
         //gbc.gridy = GridBagConstraints.FIRST_LINE_END;
-        this.add(colorWithDiv);
-        this.add(scaleWithMag);
+        pane.add(colorWithDiv);
+        pane.add(scaleWithMag);//, BorderLayout.AFTER_LAST_LINE);
         timeArea = new JTextArea("time: " + panel.time + " (s)");
         fpsArea = new JTextArea();
         curlArea = new JTextArea();
         divArea = new JTextArea();
         magArea = new JTextArea();
         jacobArea = new JTextArea();
-        this.add(timeArea, "bottom");
-        this.add(fpsArea);
-        this.add(curlArea);
-        this.add(divArea);
-        this.add(magArea);
-        this.add(PText);
+        pane.add(timeArea, "bottom");
+        pane.add(fpsArea);
+        pane.add(curlArea);
+        pane.add(divArea);
+        pane.add(magArea);
+        pane.add(PText);
         PText.setEditable(false);
-        this.add(P);
-        this.add(QText);
+        pane.add(P);
+        pane.add(QText);
         QText.setEditable(false);
-        this.add(Q);
+        pane.add(Q);
         //this.add(new JTextArea("Zoom:"));
         //this.add(zoomSlider);//not used anymore
-        this.add(jacobArea);
+        pane.add(jacobArea);
         complexDetail = new JSlider(1, 50, 20);
         complexDetail.setInverted(true);
-        this.add(new JTextField("Complex equation detail:"));
-        this.add(complexDetail);
+        pane.add(new JTextField("Complex equation detail:"));
+        pane.add(complexDetail);
         mandelbrotDetail = new JSlider(10, 10000, 100);
-        this.add(new JTextField("Mandelbrot set detail:"));
-        this.add(mandelbrotDetail);
+        pane.add(new JTextField("Mandelbrot set detail:"));
+        pane.add(mandelbrotDetail);
         coordAtPoint = new JTextArea();
         coordAtPoint.setEditable(false);
         outputAtPoint = new JTextArea();
         outputAtPoint.setEditable(false);
-        this.add(coordAtPoint);
-        this.add(outputAtPoint);
+        pane.add(coordAtPoint);
+        pane.add(outputAtPoint);
 
         contourFreeform = new JButton("Contour integral (freeform)");
         contourFreeform.addActionListener(new ActionListener() {
@@ -188,7 +192,9 @@ class Menu extends JFrame
                             }
                             contourFreeformActive = false;
                             contourFreeformClosedActive = false;
-                            contourFreeformPos.clear();
+                            contourFreeformPos.clear();//reset after every contour integral
+                            contourFreeformVal.clear();
+                            lastMousePos = new Point(-1, -1);
                         }
                     });
                 }
@@ -198,10 +204,10 @@ class Menu extends JFrame
                 System.out.println("done");
             }
         });
-        this.add(contourFreeform);
+        pane.add(contourFreeform);
         contourFreeformClosed = new JButton("Closed contour integral (closed)");
         contourFreeformClosed.addActionListener(contourFreeform.getActionListeners()[0]);
-        this.add(contourFreeformClosed);
+        pane.add(contourFreeformClosed);
         contourCircular = new JButton("Circular contour integral");
         contourCircular.addActionListener(new ActionListener() {
             @Override
@@ -240,7 +246,7 @@ class Menu extends JFrame
                 }
             }
         });
-        this.add(contourCircular);
+        pane.add(contourCircular);
         addTestPoint = new JButton("Add test point");
         addTestPoint.addActionListener(new ActionListener() {
             @Override
@@ -260,7 +266,11 @@ class Menu extends JFrame
                 });
             }
         });
-        this.add(addTestPoint);
+        pane.add(addTestPoint);
+        sPane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        sPane.setPreferredSize(new Dimension(350, 900));
+        this.add(sPane);
+        sPane.setViewportView(pane);
     }
     public static void main(String[] args)
     {
@@ -364,7 +374,7 @@ class Menu extends JFrame
             magArea.setText(df.format(panel.minCoordX) + " " + df.format(panel.maxCoordX) + " " + df.format(panel.minCoordY) + " " + df.format(panel.maxCoordY));
             double mouseCoordX = panel.screenToCoordsX(panel.userMouse.x - 6);
             double mouseCoordY = panel.screenToCoordsY(panel.userMouse.y - 31);
-            coordAtPoint.setText("Mouse coordinates: (" + mouseCoordX + ", " + mouseCoordY + ")");
+            coordAtPoint.setText("Mouse coordinates: (" + df.format(mouseCoordX) + ", " + df.format(mouseCoordY) + ")");
             panel.parser.addVariable("x", mouseCoordX);
             panel.parser.addVariable("y", mouseCoordY);
             panel.parser.addVariable("t", panel.time);
@@ -451,10 +461,10 @@ class Menu extends JFrame
         g2d.setStroke(new BasicStroke(1));//thickness/size of line of test point trajectory
         for(Point i: testPoints)
         {
-            panel.g.drawOval(i.x, i.y, 2, 2);
+            panel.g.fillOval(i.x - 3, i.y - 3, 6, 6);
             double tempX = i.x;
             double tempY = i.y;
-            for(int j = 0; j < 500 && (tempX > 0 && tempY > 0); j++) {
+            for(int j = 0; j < 5000 && (tempX > 0 && tempY > 0); j++) {
                 double tempX2 = tempX;
                 double tempY2 = tempY;
                 Arrow temp = new Arrow(panel.screenToCoordsX(tempX), panel.screenToCoordsY(tempY), panel);
@@ -464,7 +474,7 @@ class Menu extends JFrame
             }
             tempX = i.x;
             tempY = i.y;
-            for(int j = 0; j < 500 && (tempX > 0 && tempY > 0); j++) {
+            for(int j = 0; j < 5000 && (tempX > 0 && tempY > 0); j++) {
                 double tempX2 = tempX;
                 double tempY2 = tempY;
                 Arrow temp = new Arrow(panel.screenToCoordsX(tempX), panel.screenToCoordsY(tempY), panel);
